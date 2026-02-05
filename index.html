@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodExpress - Delicious Food Delivery</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-utensils"></i>
+                <span>FoodExpress</span>
+            </a>
+            
+            <div class="nav-links">
+                <a href="index.html" class="active"><i class="fas fa-home"></i> Home</a>
+                <a href="menu.html"><i class="fas fa-utensils"></i> Menu</a>
+                <a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart <span id="cart-count" class="cart-count">0</span></a>
+                <a href="order-history.html"><i class="fas fa-history"></i> Orders</a>
+                
+                <div class="auth-buttons" id="auth-buttons">
+                    <a href="login.html" class="btn btn-outline"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    <a href="register.html" class="btn btn-primary"><i class="fas fa-user-plus"></i> Register</a>
+                </div>
+                
+                <div class="user-menu" id="user-menu" style="display: none;">
+                    <div class="user-dropdown">
+                        <button class="user-btn">
+                            <i class="fas fa-user-circle"></i>
+                            <span id="username-display"></span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="#"><i class="fas fa-user"></i> Profile</a>
+                            <a href="order-history.html"><i class="fas fa-history"></i> Order History</a>
+                            <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="menu-toggle" id="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Delicious Food Delivered to Your Doorstep</h1>
+                <p>Order from the best restaurants in town. Fast delivery, fresh food, and great prices.</p>
+                <a href="menu.html" class="btn btn-primary btn-large">
+                    <i class="fas fa-utensils"></i> Order Now
+                </a>
+            </div>
+            <div class="hero-image">
+                <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Delicious Food">
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">Why Choose FoodExpress?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-shipping-fast"></i>
+                    <h3>Fast Delivery</h3>
+                    <p>Get your food delivered in 30 minutes or less</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-utensils"></i>
+                    <h3>Fresh Food</h3>
+                    <p>Prepared with the freshest ingredients daily</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-tags"></i>
+                    <h3>Best Prices</h3>
+                    <p>Great quality at affordable prices</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-headset"></i>
+                    <h3>24/7 Support</h3>
+                    <p>Customer support available round the clock</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Popular Categories -->
+    <section class="categories">
+        <div class="container">
+            <h2 class="section-title">Popular Categories</h2>
+            <div class="categories-grid" id="categories-container">
+                <!-- Categories will be loaded dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>FoodExpress</h3>
+                    <p>Delivering happiness since 2026</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <a href="index.html">Home</a>
+                    <a href="menu.html">Menu</a>
+                    <a href="#">About Us</a>
+                    <a href="#">Contact</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact Us</h4>
+                    <p><i class="fas fa-phone"></i> +255 699222829 </p>
+                    <p><i class="fas fa-envelope"></i> support@foodexpress.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 FoodExpress. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+    <script>
+        // Check login status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+            loadCategories();
+            updateCartCount();
+        });
+        
+        function loadCategories() {
+            fetch('../backend/api/food.php?action=categories')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const container = document.getElementById('categories-container');container.innerHTML = data.data.map(category => `
+                            <div class="category-card">
+                                <div class="category-image">
+                                    <img src="${category.image_url || 'default-food.jpg'}" alt="${category.category_name}">
+                                </div>
+                                <h3>${category.category_name}</h3>
+                                <p>${category.description || 'Delicious items'}</p>
+                                <a href="menu.html?category=${category.category_id}" class="btn btn-outline">
+                                    View Items <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        `).join('');
+                    }
+                })
+                .catch(error => console.error('Error loading categories:', error));
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu - FoodExpress</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation (same as index.html) -->
+    <nav class="navbar">
+        <!-- Copy navigation from -->
+           <div class="container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-utensils"></i>
+                <span>FoodExpress</span>
+            </a>
+            
+            <div class="nav-links">
+                <a href="index.html" class="active"><i class="fas fa-home"></i> Home</a>
+                <a href="menu.html"><i class="fas fa-utensils"></i> Menu</a>
+                <a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart <span id="cart-count" class="cart-count">0</span></a>
+                <a href="order-history.html"><i class="fas fa-history"></i> Orders</a>
+                
+                <div class="auth-buttons" id="auth-buttons">
+                    <a href="login.html" class="btn btn-outline"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    <a href="register.html" class="btn btn-primary"><i class="fas fa-user-plus"></i> Register</a>
+                </div>
+                
+                <div class="user-menu" id="user-menu" style="display: none;">
+                    <div class="user-dropdown">
+                        <button class="user-btn">
+                            <i class="fas fa-user-circle"></i>
+                            <span id="username-display"></span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="#"><i class="fas fa-user"></i> Profile</a>
+                            <a href="order-history.html"><i class="fas fa-history"></i> Order History</a>
+                            <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="menu-toggle" id="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+    </nav>
+
+    <!-- Menu Section -->
+    <section class="menu-section">
+        <div class="container">
+            <div class="menu-header">
+                <h1>Our Menu</h1>
+                <div class="menu-controls">
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="Search food items...">
+                        <button id="search-btn"><i class="fas fa-search"></i></button>
+                    </div>
+                    <select id="category-filter" class="filter-select">
+                        <option value="">All Categories</option>
+                        <!-- Categories will be loaded dynamically -->
+                    </select>
+                    <select id="sort-by" class="filter-select">
+                        <option value="name">Sort by Name</option>
+                        <option value="price_low">Price: Low to High</option>
+                        <option value="price_high">Price: High to Low</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="menu-grid" id="menu-container">
+                <!-- Food items will be loaded dynamically -->
+            </div>
+            
+            <div class="loading" id="loading">
+                <i class="fas fa-spinner fa-spin"></i> Loading menu...
+            </div>
+            
+            <div class="no-results" id="no-results" style="display: none;">
+                <i class="fas fa-search"></i>
+                <h3>No food items found</h3>
+                <p>Try a different search term or category</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer (same as index.html) -->
+    <footer class="footer">
+        <!-- Copy footer from index.html -->
+    </footer>
+
+    <!-- Food Item Modal -->
+    <div class="modal" id="food-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body" id="modal-body">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/main.js"></script>
+    <script>
+        let currentCategory = '';
+        let currentSearch = '';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+            updateCartCount();
+            loadCategories();
+            loadFoodItems();
+            
+            // Event listeners
+            document.getElementById('search-input').addEventListener('input', function(e) {
+                currentSearch = e.target.value;
+                loadFoodItems();
+            });
+            
+            document.getElementById('category-filter').addEventListener('change', function(e) {
+                currentCategory = e.target.value;
+                loadFoodItems();
+            });
+            
+            document.getElementById('sort-by').addEventListener('change', loadFoodItems);
+            
+            // Close modal
+            document.querySelector('.close-modal').addEventListener('click', function() {
+                document.getElementById('food-modal').style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('food-modal');
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+        function loadCategories() {
+            fetch('../backend/api/food.php?action=categories')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const select = document.getElementById('category-filter');
+                        select.innerHTML = '<option value="">All Categories</option>' +
+                            data.data.map(category => 
+                                <option value="${category.category_id}">${category.category_name}</option>
+                            ).join('');
+                    }
+                });
+        }
+        function loadFoodItems() {
+            const loading = document.getElementById('loading');
+            const noResults = document.getElementById('no-results');
+            const container = document.getElementById('menu-container');
+            
+            loading.style.display = 'block';
+            container.innerHTML = '';
+            
+            let url = '../backend/api/food.php?';
+            if (currentCategory) {
+                url += 'category_id=${currentCategory}&';
+            }
+            if (currentSearch) {
+                url += 'search=${encodeURIComponent(currentSearch)}&';
+            }
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    
+                    if (data.success && data.data.length > 0) {
+                        noResults.style.display = 'none';
+                        
+                        // Sort items
+                        let items = [...data.data];
+                        const sortBy = document.getElementById('sort-by').value;
+                        
+                        switch(sortBy) {
+                            case 'price_low':
+                                items.sort((a, b) => a.price - b.price);
+                                break;
+                            case 'price_high':
+                                items.sort((a, b) => b.price - a.price);
+                                break;
+                            default:
+                                items.sort((a, b) => a.food_name.localeCompare(b.food_name));
+                        }
+                        
+                        container.innerHTML = items.map(item => `
+                            <div class="food-card">
+                                <div class="food-image">
+                                    <img src="${item.image_url || 'default-food.jpg'}" alt="${item.food_name}">
+                                    ${!item.is_available ? '<div class="unavailable">Unavailable</div>' : ''}
+                                </div>
+                                <div class="food-info">
+                                    <h3>${item.food_name}</h3>
+                                    <p class="food-description">${item.description || 'Delicious food item'}</p>
+                                    <div class="food-footer">
+                                        <span class="food-price">$${parseFloat(item.price).toFixed(2)}</span>
+                                        ${item.is_available ? `
+                                        <button class="btn btn-primary add-to-cart" onclick="addToCart(${item.food_id})">
+                                            <i class="fas fa-cart-plus"></i> Add to Cart
+                                        </button>
+                                        ` : `
+                                        <button class="btn btn-disabled" disabled>
+                                            <i class="fas fa-ban"></i> Unavailable
+                                        </button>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        noResults.style.display = 'block';
+                    }})
+                .catch(error => {
+                    console.error('Error loading food items:', error);
+                    loading.style.display = 'none';
+                    noResults.style.display = 'block';
+                });
+        }
+        
+        function addToCart(foodId) {
+            if (!checkLoginStatus(true)) return;
+            
+            fetch('../backend/api/cart.php?action=add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ food_id: foodId, quantity: 1 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Item added to cart!');
+                    updateCartCount();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to add item to cart');
+            });
+        }
+    </script>
+</body>
+</html>
