@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - FoodExpress</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Admin login specific styles */
+        .admin-login-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .admin-login-container {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .admin-login-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .admin-login-header .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .admin-login-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+        }
+        
+        .admin-login-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        
+        .admin-login-form {
+            padding: 40px 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .form-group label i {
+            color: #667eea;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.875rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .admin-login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        
+        .admin-login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .admin-login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .admin-login-footer {
+            text-align: center;
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+        .admin-login-footer p {
+            margin: 0 0 15px 0;
+            color: #666;
+        }
+        
+        .back-to-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-to-home:hover {
+            text-decoration: underline;
+        }
+        
+        .security-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            color: #666;
+            font-size: 0.85rem;
+        }
+        
+        .security-info i {
+            color: #27ae60;
+        }
+        
+        .admin-alert {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        @media (max-width: 480px) {
+            .admin-login-container {
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .admin-login-header {
+                padding: 30px 20px;
+            }
+            
+            .admin-login-form {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Login Section -->
+    <section class="admin-login-section">
+        <div class="admin-login-container">
+            <div class="admin-login-header">
+                <div class="logo">
+                    <i class="fas fa-utensils"></i>
+                    <span>FoodExpress</span>
+                </div>
+                <h1>Admin Portal</h1>
+                <p>Restricted Access - Authorized Personnel Only</p>
+            </div>
+            
+            <div class="admin-alert" id="admin-alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="alert-message"></span>
+            </div>
+            
+            <form id="admin-login-form" class="admin-login-form">
+                <div class="form-group">
+                    <label for="admin-username">
+                        <i class="fas fa-user-shield"></i> Admin Username
+                    </label>
+                    <input type="text" id="admin-username" name="username" required 
+                           placeholder="Enter admin username" autocomplete="off">
+                    <div class="error-message" id="username-error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin-password">
+                        <i class="fas fa-key"></i> Password
+                    </label>
+                    <input type="password" id="admin-password" name="password" required 
+                           placeholder="Enter admin password" autocomplete="off">
+                           <div class="error-message" id="password-error"></div>
+                </div>
+                
+                <button type="submit" class="admin-login-btn" id="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Login to Admin Dashboard
+                </button>
+            </form>
+            
+            <div class="admin-login-footer">
+                <p>For regular customer login, please use the customer portal</p>
+                <a href="../index.php" class="back-to-home">
+                    <i class="fas fa-arrow-left"></i> Back to Home
+                </a>
+                <div class="security-info">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Secure Admin Portal • 256-bit Encryption</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('admin-login-form');
+            const usernameInput = document.getElementById('admin-username');
+            const passwordInput = document.getElementById('admin-password');
+            const loginBtn = document.getElementById('login-btn');
+            const adminAlert = document.getElementById('admin-alert');
+            
+            // Check if already logged in
+            checkAdminAccess();
+            
+            // Validate form on submit
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Clear previous errors and alerts
+                clearErrors();
+                adminAlert.style.display = 'none';
+                
+                // Validate inputs
+                let isValid = true;
+                
+                if (!usernameInput.value.trim()) {
+                    showError('username-error', 'Admin username is required');
+                    isValid = false;
+                }
+                
+                if (!passwordInput.value.trim()) {
+                    showError('password-error', 'Password is required');
+                    isValid = false;
+                } else if (passwordInput.value.length < 6) {
+                    showError('password-error', 'Password must be at least 6 characters');
+                    isValid = false;
+                }
+                
+                if (isValid) {
+                    loginAdmin();
+                }
+            });
+            
+            function checkAdminAccess() {
+                // Check if user is already logged in as admin
+                fetch('../backend/api/auth.php?action=check')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.data && data.data.role_id == 1) {
+                            // Already logged in as admin, redirect to dashboard
+                            window.location.href = '../admin/dashboard.php';
+                        }
+                    })
+                    .catch(error => console.error('Error checking admin access:', error));
+            }
+            
+            function loginAdmin() {
+                const originalText = loginBtn.innerHTML;
+                
+                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+                loginBtn.disabled = true;
+                
+                const formData = {
+                    username: usernameInput.value.trim(),
+                    password: passwordInput.value,
+                    admin_login: true
+                };
+                
+                fetch('../backend/api/auth.php?action=login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.data.role_id == 1) {
+                            // Admin login successful
+                            showAlert('success', 'Admin login successful! Redirecting...');
+                            
+                            // Redirect to admin dashboard
+                            setTimeout(() => {
+                                window.location.href = '../admin/dashboard.php';
+                            }, 1500);
+                        } else {
+                            // Regular user trying to access admin portal
+                            showAlert('error', 'Access denied. This portal is for administrators only.');
+                            loginBtn.innerHTML = originalText;
+                            loginBtn.disabled = false;
+                        }
+                    } else {
+                        showAlert('error', data.message || 'Login failed');
+                        loginBtn.innerHTML = originalText;
+                        loginBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('error', 'An error occurred. Please try again.');
+                    loginBtn.innerHTML = originalText;
+                    loginBtn.disabled = false;
+                });
+            }
+            
+            function showAlert(type, message) {
+                adminAlert.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                    <span>${message}</span>
+                `;
+                adminAlert.style.display = 'flex';
+                adminAlert.style.alignItems = 'center';
+                adminAlert.style.gap = '10px';
+                adminAlert.style.background = type === 'success' ? '#d4edda' : '#f8d7da';
+                adminAlert.style.borderColor = type === 'success' ? '#c3e6cb' : '#f5c6cb';
+                adminAlert.style.color = type === 'success' ? '#155724' : '#721c24';
+            }
+            
+            function showError(elementId, message) {
+                const errorElement = document.getElementById(elementId);
+                if (errorElement) {
+                    errorElement.textContent = message;
+                    errorElement.style.display = 'block';
+                }
+            }
+            
+            function clearErrors() {
+                document.querySelectorAll('.error-message').forEach(element => {
+                    element.textContent = '';
+                    element.style.display = 'none';
+                });
+            }
+            
+            // Add keypress event for Enter key
+            document.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && document.activeElement !== loginBtn) {
+                    loginForm.dispatchEvent(new Event('submit'));
+                }
+            });
+            
+            // Focus username field on load
+            usernameInput.focus();
+        });
+    </script>
+</body>
+</html>

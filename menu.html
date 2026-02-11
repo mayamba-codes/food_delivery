@@ -79,7 +79,6 @@
             <div class="loading" id="loading">
                 <i class="fas fa-spinner fa-spin"></i> Loading menu...
             </div>
-            
             <div class="no-results" id="no-results" style="display: none;">
                 <i class="fas fa-search"></i>
                 <h3>No food items found</h3>
@@ -104,152 +103,289 @@
     </div>
 
     <script src="../assets/js/main.js"></script>
-    <script>
-        let currentCategory = '';
-        let currentSearch = '';
+<script>
+let currentCategory = '';
+    let currentSearch = '';
+    let currentSort = 'name';
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check login status
+        checkLoginStatus();
+        updateCartCount();
         
-        document.addEventListener('DOMContentLoaded', function() {
-            checkLoginStatus();
-            updateCartCount();
-            loadCategories();
-            loadFoodItems();
-            
-            // Event listeners
-            document.getElementById('search-input').addEventListener('input', function(e) {
+        // Load categories and food items
+        loadCategories();
+        loadFoodItems();
+        
+        // Event listeners
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
                 currentSearch = e.target.value;
                 loadFoodItems();
             });
-            
-            document.getElementById('category-filter').addEventListener('change', function(e) {
+        }
+        
+        const categoryFilter = document.getElementById('category-filter');
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', function(e) {
                 currentCategory = e.target.value;
                 loadFoodItems();
             });
-            
-            document.getElementById('sort-by').addEventListener('change', loadFoodItems);
-            
-            // Close modal
-            document.querySelector('.close-modal').addEventListener('click', function() {
-                document.getElementById('food-modal').style.display = 'none';
-            });
-            
-            // Close modal when clicking outside
-            window.addEventListener('click', function(event) {
-                const modal = document.getElementById('food-modal');
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
-            });
-        });
-        function loadCategories() {
-            fetch('../backend/api/food.php?action=categories')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const select = document.getElementById('category-filter');
-                        select.innerHTML = '<option value="">All Categories</option>' +
-                            data.data.map(category => 
-                                <option value="${category.category_id}">${category.category_name}</option>
-                            ).join('');
-                    }
-                });
-        }
-        function loadFoodItems() {
-            const loading = document.getElementById('loading');
-            const noResults = document.getElementById('no-results');
-            const container = document.getElementById('menu-container');
-            
-            loading.style.display = 'block';
-            container.innerHTML = '';
-            
-            let url = '../backend/api/food.php?';
-            if (currentCategory) {
-                url += 'category_id=${currentCategory}&';
-            }
-            if (currentSearch) {
-                url += 'search=${encodeURIComponent(currentSearch)}&';
-            }
-            
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    loading.style.display = 'none';
-                    
-                    if (data.success && data.data.length > 0) {
-                        noResults.style.display = 'none';
-                        
-                        // Sort items
-                        let items = [...data.data];
-                        const sortBy = document.getElementById('sort-by').value;
-                        
-                        switch(sortBy) {
-                            case 'price_low':
-                                items.sort((a, b) => a.price - b.price);
-                                break;
-                            case 'price_high':
-                                items.sort((a, b) => b.price - a.price);
-                                break;
-                            default:
-                                items.sort((a, b) => a.food_name.localeCompare(b.food_name));
-                        }
-                        
-                        container.innerHTML = items.map(item => `
-                            <div class="food-card">
-                                <div class="food-image">
-                                    <img src="${item.image_url || 'default-food.jpg'}" alt="${item.food_name}">
-                                    ${!item.is_available ? '<div class="unavailable">Unavailable</div>' : ''}
-                                </div>
-                                <div class="food-info">
-                                    <h3>${item.food_name}</h3>
-                                    <p class="food-description">${item.description || 'Delicious food item'}</p>
-                                    <div class="food-footer">
-                                        <span class="food-price">$${parseFloat(item.price).toFixed(2)}</span>
-                                        ${item.is_available ? `
-                                        <button class="btn btn-primary add-to-cart" onclick="addToCart(${item.food_id})">
-                                            <i class="fas fa-cart-plus"></i> Add to Cart
-                                        </button>
-                                        ` : `
-                                        <button class="btn btn-disabled" disabled>
-                                            <i class="fas fa-ban"></i> Unavailable
-                                        </button>
-                                        `}
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('');
-                    } else {
-                        noResults.style.display = 'block';
-                    }})
-                .catch(error => {
-                    console.error('Error loading food items:', error);
-                    loading.style.display = 'none';
-                    noResults.style.display = 'block';
-                });
         }
         
-        function addToCart(foodId) {
-            if (!checkLoginStatus(true)) return;
-            
-            fetch('../backend/api/cart.php?action=add', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ food_id: foodId, quantity: 1 })
-            })
+        const sortSelect = document.getElementById('sort-by');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', function(e) {
+                currentSort = e.target.value;
+                sortFoodItems();
+            });
+        }
+        
+        // Get category from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoryParam = urlParams.get('category');
+        if (categoryParam) {
+            currentCategory = categoryParam;
+        }
+        
+        // Mobile menu
+        const menuToggle = document.getElementById('menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
+        if (menuToggle && navLinks) {
+            menuToggle.addEventListener('click', function() {
+                navLinks.classList.toggle('active');
+            });
+        }
+        
+        // Modal close
+        const closeModal = document.querySelector('.close-modal');
+        if (closeModal) {
+            closeModal.addEventListener('click', function() {
+                document.getElementById('food-modal').style.display = 'none';
+            });
+        }
+        
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('food-modal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
+    
+    function loadCategories() {
+        fetch('../backend/api/categories.php')
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Item added to cart!');
-                    updateCartCount();
-                } else {
-                    alert('Error: ' + data.message);
+                    const select = document.getElementById('category-filter');
+                    if (select) {
+                        let options = '<option value="">All Categories</option>';
+                        data.data.forEach(category => {
+                            const selected = (currentCategory == category.category_id) ? 'selected' : '';
+                            options += `<option value="${category.category_id}" ${selected}>${category.category_name}</option>`;
+                        });
+                        select.innerHTML = options;
+                    }
+                    
+                    // Also load categories for homepage if on index
+                    const categoriesContainer = document.getElementById('categories-container');
+                    if (categoriesContainer) {
+                        categoriesContainer.innerHTML = data.data.map(category => `
+                            <div class="category-card">
+                                <div class="category-image">
+                                    <img src="https://via.placeholder.com/300x200/3498db/ffffff?text=FoodExpress"
+                                         alt="${category.category_name}"
+                                         onerror="this.src='../assets/images/default-food.jpg'">
+                                </div>
+                                <h3>${category.category_name}</h3>
+                                <p>${category.description || 'Delicious food items'}</p>
+                                <a href="menu.html?category=${category.category_id}" class="btn btn-outline">
+                                    View Items <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        `).join('');
+                    }
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to add item to cart');
+                console.error('Error loading categories:', error);
+                showError('Failed to load categories');
             });
+    }
+    
+    function loadFoodItems() {
+        const container = document.getElementById('menu-container');
+        const loading = document.getElementById('loading');
+        const noResults = document.getElementById('no-results');
+        
+        if (!container) return;
+        
+        // Show loading
+        container.style.display = 'none';
+        if (loading) loading.style.display = 'block';
+        if (noResults) noResults.style.display = 'none';
+        
+        let url = '../backend/api/food.php?';
+        if (currentCategory) {
+            url += `category_id=${currentCategory}&`;
         }
-    </script>
+        if (currentSearch) {
+            url += `search=${encodeURIComponent(currentSearch)}&`;
+        }
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                container.style.display = 'grid';
+                if (loading) loading.style.display = 'none';
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    if (noResults) noResults.style.display = 'none';
+                    displayFoodItems(data.data);
+                } else {
+                    if (noResults) noResults.style.display = 'block';
+                    container.innerHTML = '';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading food items:', error);
+                container.style.display = 'grid';
+                if (loading) loading.style.display = 'none';
+                if (noResults) noResults.style.display = 'block';
+                showError('Failed to load menu. Please refresh the page.');
+            });
+    }
+    
+    function displayFoodItems(items) {
+        const container = document.getElementById('menu-container');
+        if (!container) return;
+        
+        // Sort items
+        let sortedItems = [...items];
+        switch(currentSort) {
+            case 'price_low':
+                sortedItems.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+                break;
+            case 'price_high':
+                sortedItems.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+                break;
+            default:
+                sortedItems.sort((a, b) => a.food_name.localeCompare(b.food_name));
+        }
+        
+        container.innerHTML = sortedItems.map(item => `
+            <div class="food-card">
+                <div class="food-image">
+                    <img src="${item.image_url || '../assets/images/default-food.jpg'}" 
+                         alt="${item.food_name}"
+                         onerror="this.src='../assets/images/default-food.jpg'">
+                    ${!item.is_available ? '<span class="unavailable">Unavailable</span>' : ''}
+                </div>
+                <div class="food-info">
+                    <h3>${item.food_name}</h3>
+                    <p class="food-description">${item.description || 'Delicious food item'}</p>
+                    <div class="food-footer">
+                        <span class="food-price">$${parseFloat(item.price).toFixed(2)}</span>
+                        ${item.is_available ? 
+                            `<button class="btn btn-primary add-to-cart" onclick="addToCart(${item.food_id})">
+                                <i class="fas fa-cart-plus"></i> Add to Cart
+                            </button>` : 
+                            `<button class="btn btn-disabled" disabled>
+                                <i class="fas fa-ban"></i> Unavailable
+                            </button>`
+                        }
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    function sortFoodItems() {
+        const container = document.getElementById('menu-container');
+        if (container && container.children.length > 0) {
+            const items = Array.from(container.children).map(card => {
+                return {
+                    element: card,
+                    name: card.querySelector('h3')?.textContent || '',
+                    price: parseFloat(card.querySelector('.food-price')?.textContent.replace('$', '') || 0)
+                };
+            });
+            
+            switch(currentSort) {
+                case 'price_low':
+                    items.sort((a, b) => a.price - b.price);
+                    break;
+                case 'price_high':
+                    items.sort((a, b) => b.price - a.price);
+                    break;
+                default:
+                    items.sort((a, b) => a.name.localeCompare(b.name));
+            }
+            
+            container.innerHTML = '';
+            items.forEach(item => container.appendChild(item.element));
+        }
+    }
+    
+    function addToCart(foodId) {
+        if (!checkLoginStatus()) {
+            if (confirm('Please login to add items to cart. Go to login page?')) {
+                window.location.href = 'login.html';
+            }
+            return;
+        }
+        
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+        button.disabled = true;
+        
+        fetch('../backend/api/cart.php?action=add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                food_id: foodId, 
+                quantity: 1 
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+            
+            if (data.success) {
+                showNotification('✓ Item added to cart!', 'success');
+                updateCartCount();
+            } else {
+                if (data.message === 'Please login first') {
+                    window.location.href = 'login.html';
+                } else {
+                    showNotification(data.message || 'Failed to add item', 'error');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            button.innerHTML = originalText;
+            button.disabled = false;
+            showNotification('Failed to add item. Check your connection.', 'error');
+        });
+    }
+    
+    function showNotification(message, type = 'info') {
+        // Simple alert for now
+        alert(message);
+    }
+    
+    function showError(message) {
+        console.error(message);
+        // You can enhance this to show a toast notification
+    }
+
+</script>
 </body>
 </html>
